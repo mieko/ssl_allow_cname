@@ -2,33 +2,43 @@ require "ssl_allow_cname/version"
 require 'openssl'
 
 module SslAllowCname
-  module MonkeyPatch
+  module SSLContext
+    attr_accessor :allow_cname
+  end
 
-    module_function
-    def verify_hostname(hostname, san)
-      return @allow_cname ? verify_allow_cname(hostname, san)
-                          : super
-    end
+  module SSLSocket
+    def post_connection_check(hostname)
+      return super if context.allow_cname.nil?
 
-    def verify_allow_cname(hostname, san)
-      Array(@allow_cname).each do |test|
+      cname = peer_cert.subject.to_a.map do |oid, value|
+        oid == 'CN' ? value : nil
+      end.compact.first
+
+      passed = Array(context.allow_cname).any? do |test|
         case test
-          when String
-            return true if san == test
-          when Regexp
-            return true if test.match(san)
-          when Proc
-            result = (test.arity == 1) ? test.call(san)
-                                       : test.call(san, hostname)
-            return true if result
+        when String, Regexp
+          test === cname
+        when Proc
+          (test.arity == 1) ? test.call(cname)
+                            : test.call(cname, hostname)
+        when :match
+          begin
+            super
+            true
+          rescue SSLError
+            false
+          end
         end
       end
-      return false
+
+      unless passed
+        fail OpenSSL::SSL::SSLError, "Peer certificate did not match any " +
+                                     "predicate in :allow_cname.  Use :match " +
+                                     "to get normal CommonName/Host validation"
+      end
     end
   end
 end
 
-class OpenSSL::SSL::SSLContext
-  attr_accessor :allow_cname
-  prepend SslAllowCname::MonkeyPatch
-end
+OpenSSL::SSL::SSLContext.prepend(SslAllowCname::SSLContext)
+OpenSSL::SSL::SSLSocket.prepend(SslAllowCname::SSLSocket)
