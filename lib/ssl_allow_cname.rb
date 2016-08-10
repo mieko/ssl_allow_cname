@@ -23,6 +23,7 @@ module SslAllowCname
             return true if result
         end
       end
+      return false
     end
   end
 end
