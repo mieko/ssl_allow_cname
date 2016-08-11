@@ -10,6 +10,11 @@ module SslAllowCname
     def post_connection_check(hostname)
       return super if context.allow_cname.nil?
 
+      if peer_cert.nil?
+        msg = "allow_cname specified, but peer presented no certificate"
+        raise OpenSSL::SSL::SSLError, msg
+      end
+
       cname = peer_cert.subject.to_a.map do |oid, value|
         oid == 'CN' ? value : nil
       end.compact.first
@@ -36,6 +41,7 @@ module SslAllowCname
                                      "predicate in :allow_cname.  Use :match " +
                                      "to get normal CommonName/Host validation"
       end
+      true
     end
   end
 end
