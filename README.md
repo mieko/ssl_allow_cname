@@ -31,7 +31,7 @@ redis = Redis.new(
 ```
 
 Using the `allow_cname` option disables host verification, but specifying
-`allow_cname: :match` will give you the same behavior as peer verification.  
+`allow_cname: :match` will give you the same behavior as peer verification. 
 When you don't specify `allow_cname`, everything works the same as out-of-the-
 box.
 
