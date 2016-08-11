@@ -31,21 +31,22 @@ redis = Redis.new(
 ```
 
 Using the `allow_cname` option disables host verification, but specifying
-`allow_cname: :match` will give you the same behavior as peer verification. 
+`allow_cname: :match` will give you the same behavior as peer verification.
 When you don't specify `allow_cname`, everything works the same as out-of-the-
 box.
 
 The value passed to `allow_cname` can take a few forms:
 
-  * A string, which means the CommonName presented must exactly match what
+  * A `String`, which means the CommonName presented must exactly match what
     you've specified.
-  * A Regexp, which will pass if it matches the CommonName of the peer
+  * A `Regexp`, which will pass if it matches the CommonName of the peer
     certificate.
-  * A Proc, which can accept either `(common_name)` or `(common_name, host)`
-    arguments lists.  Return `true` if you like it, false otherwise.
+  * A `Proc`, which can accept either `(common_name)` or `(common_name, host)`
+    argument lists.  Return `true` if you like it, false otherwise.
   * The symbol `:match`, which accepts anything OpenSSL would've considered
     valid.
-  * An Array of any of the above, which **operates in an OR, not AND, fashion.**
+  * An `Array` of any of the above, which **operates in an OR, not AND,
+    fashion.**
 
 For simplicity, and to make it easier to not get wrong, `ssl_allow_cname` does
 not consider SubjectAlternateNames, just the first CommonName.  If you're
